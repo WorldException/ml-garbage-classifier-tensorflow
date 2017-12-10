@@ -23,9 +23,12 @@ train_step = tf.train.GradientDescentOptimizer(learning_rate=0.5).minimize(cross
 
 sess = tf.InteractiveSession()
 tf.global_variables_initializer().run()
-for _ in range(1000):
+for step in range(1000):
     batch_x, batch_y = mnist.train.next_batch(100)
-    sess.run(train_step, feed_dict={x: batch_x, y_: batch_y})
+    """ Added cross_entropy to sess.run(...) so that I can save the loss values in each step """
+    _, loss = sess.run([train_step, cross_entropy], feed_dict={x: batch_x, y_: batch_y})
+    if step % 100 == 0:
+        print 'Loss at step {step}: {loss}'.format(step=step, loss=loss)
 
 """ Evaluate -----------------"""
 
