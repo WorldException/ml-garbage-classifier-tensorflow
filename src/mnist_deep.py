@@ -33,8 +33,11 @@ b_conv1 = bias_variable([32])
 """ Reshape x to a 4d tensor """
 """ inferred (-1), width, height, n channels"""
 x_image = tf.reshape(x, [-1, 28, 28, 1])
-""" Pooling """
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+""" Pooling
+    Takes and returns a tensor in NHWC format: https://www.tensorflow.org/api_docs/python/tf/nn/max_pool
+    (n samples, height, width, channels)
+"""
 h_pool1 = max_pool_2x2(h_conv1)
 
 
