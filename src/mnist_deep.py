@@ -52,7 +52,8 @@ h_fc1 = tf.nn.relu(tf.matmul(h_pool1_flat, W_fc1) + b_fc1)
 
 
 """ Add Dropout Layer here... """
-
+keep_prob = tf.placeholder(tf.float32)
+h_fc1_dropout = tf.nn.dropout(h_fc1, keep_prob)
 
 """ FC Layer 2 """
 W_fc2 = weight_variables([1024, 10])
@@ -74,8 +75,19 @@ with tf.Session() as sess:
         batch = mnist.train.next_batch(50)
         if step % 100 == 0:
             train_accuracy = accuracy.eval(feed_dict={
-                x: batch[0], y_: batch[1]})
+                x: batch[0],
+                y_: batch[1],
+                keep_prob: 1.0
+            })
             print('step %d, training accuracy %g' % (step, train_accuracy))
-        train_step.run(feed_dict={x: batch[0], y_: batch[1]})
+        train_step.run(feed_dict={
+            x: batch[0],
+            y_: batch[1],
+            keep_prob: 0.6
+        })
 
-print('test accuracy %g' % accuracy.eval(feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
+print('test accuracy %g' % accuracy.eval(feed_dict={
+    x: mnist.test.images,
+    y_: mnist.test.labels,
+    keep_prob: 1.0
+}))
