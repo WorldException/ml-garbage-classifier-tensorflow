@@ -13,4 +13,5 @@ source /venv/bin/activate
 Dependencies:
 ```
 pip install tensorflow
+pip install matplotlib
 ```
