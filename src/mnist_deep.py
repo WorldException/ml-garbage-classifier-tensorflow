@@ -28,8 +28,8 @@ def max_pool_2x2(x):
 
 """ Conv Layer 1 """
 """ 32 features per 5x5 patch (patch size, patch size, n input channels, n output channels)"""
-W_conv1 = weight_variables([5, 5, 1, 32])
-b_conv1 = bias_variable([32])
+W_conv1 = weight_variables([5, 5, 1, 8])
+b_conv1 = bias_variable([8])
 """ Reshape x to a 4d tensor """
 """ inferred (-1), width, height, n channels"""
 x_image = tf.reshape(x, [-1, 28, 28, 1])
@@ -45,9 +45,9 @@ h_pool1 = max_pool_2x2(h_conv1)
 
 
 """ FC Layer 1 """
-W_fc1 = weight_variables([14 * 14 * 32, 1024])
-b_fc1 = bias_variable([1024])
-h_pool1_flat = tf.reshape(h_pool1, [-1, 14 * 14 * 32])
+W_fc1 = weight_variables([14 * 14 * 8, 16])
+b_fc1 = bias_variable([16])
+h_pool1_flat = tf.reshape(h_pool1, [-1, 14 * 14 * 8])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool1_flat, W_fc1) + b_fc1)
 
 
@@ -56,7 +56,7 @@ keep_prob = tf.placeholder(tf.float32)
 h_fc1_dropout = tf.nn.dropout(h_fc1, keep_prob)
 
 """ FC Layer 2 """
-W_fc2 = weight_variables([1024, 10])
+W_fc2 = weight_variables([16, 10])
 b_fc2 = bias_variable([10])
 y_conv = tf.matmul(h_fc1, W_fc2) + b_fc2
 
@@ -69,6 +69,11 @@ train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
+
+""" Prep for plotting """
+from conv_weight_plot import WeightPlotter
+weight_plotter = WeightPlotter(2, 4)
+
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for step in range(20000):
@@ -80,6 +85,11 @@ with tf.Session() as sess:
                 keep_prob: 1.0
             })
             print('step %d, training accuracy %g' % (step, train_accuracy))
+
+            """ Plot the weights for Conv1 """
+            w = W_conv1.eval()
+            weight_plotter.plot(w)
+
         train_step.run(feed_dict={
             x: batch[0],
             y_: batch[1],
