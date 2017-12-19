@@ -14,4 +14,14 @@ Dependencies:
 ```
 pip install tensorflow
 pip install matplotlib
+pip install Pillow
 ```
+
+Unzip Trash Dataset:
+
+```
+unzip src/trash_data/dataset.zip
+```
+
+#### Acknowledgements:
+Trash Dataset: https://github.com/garythung/trashnet
