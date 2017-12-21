@@ -1,19 +1,67 @@
 import os
 from os.path import join
 from PIL import Image
+import numpy as np
+import random
 
-def get_data():
-    path = '{}/{}'.format(os.path.dirname(os.path.abspath(__file__)), 'dataset/')
-    labeled_files = []
+class DataSource():
+    def __init__(self, percent_train=0.8):
+        assert percent_train < 1.0
+        self.train_images = None
+        self.train_labels = None
+        self.validate_images = None
+        self.validate_labels = None
+        self.percent_train=percent_train
 
-    labels = os.listdir(path)
-    for label in labels:
-        files = os.listdir(join(path, label))
-        for file in files:
-            full_image_path = join(join(path, label), file)
-            labeled_files.append({
-                'image': full_image_path,
-                'label': label
-            })
+    def get_data(self):
+        if self.train_images is not None:
+            return self.train_images, \
+                   self.train_labels, \
+                   self.validate_images, \
+                   self.validate_labels
 
-    print labeled_files[0]
+        path = '{}/{}'.format(os.path.dirname(os.path.abspath(__file__)), 'dataset/')
+        labeled_images = []
+
+        """ Find the image pathnames, where each folder is a label. """
+        folders = os.listdir(path)
+        n_labels = len(folders)
+        for index, label in enumerate(folders):
+            one_hot = np.zeros(n_labels)
+            one_hot[index] = 1
+            files = os.listdir(join(path, label))
+            for file in files:
+                full_image_path = join(join(path, label), file)
+                labeled_images.append({
+                    'image_path': full_image_path,
+                    'label': one_hot
+                })
+
+        """ Load image data from pathnames """
+        for labeled_image in labeled_images:
+            """ The added .convert("L") converts the image to greyscale """
+            image = Image.open(labeled_image['image_path']).convert("L")
+            """
+            Fast PIL > numpy conversion
+            https://stackoverflow.com/questions/13550376/pil-image-to-array-numpy-array-to-array-python/42036542#42036542
+            """
+            im_arr = np.fromstring(image.tobytes(), dtype=np.uint8)
+            im_arr = im_arr.reshape((image.size[0]), image.size[1])
+            labeled_image['array'] = im_arr
+
+        """ Assign images to train/validate lists """
+        n_train = int(len(labeled_images) * self.percent_train)
+        n_validate = len(labeled_images) - n_train
+        random.shuffle(labeled_images)
+        """ a[start:end] start (inclusive) to end (exclusive)"""
+        self.train_images = [image['array'] for image in labeled_images[0:n_train]]
+        self.train_labels = [image['label'] for image in labeled_images[0:n_train]]
+        self.validate_images = [image['array'] for image in labeled_images[n_train:n_train + n_validate]]
+        self.validate_labels = [image['label'] for image in labeled_images[n_train:n_train + n_validate]]
+
+        return self.train_images,\
+               self.train_labels,\
+               self.validate_images,\
+               self.validate_labels
+
+
