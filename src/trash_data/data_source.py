@@ -7,18 +7,16 @@ import random
 class DataSource():
     def __init__(self, percent_train=0.8):
         assert percent_train < 1.0
-        self.train_images = None
-        self.train_labels = None
-        self.validate_images = None
-        self.validate_labels = None
+        self.train = None
+        self.validate = None
         self.percent_train=percent_train
 
     def get_data(self):
-        if self.train_images is not None:
-            return self.train_images, \
-                   self.train_labels, \
-                   self.validate_images, \
-                   self.validate_labels
+        if self.train is not None:
+            return [image['array'] for image in self.train], \
+                   [image['label'] for image in self.train], \
+                   [image['array'] for image in self.validate], \
+                   [image['label'] for image in self.validate]
 
         path = '{}/{}'.format(os.path.dirname(os.path.abspath(__file__)), 'dataset/')
         labeled_images = []
@@ -54,14 +52,21 @@ class DataSource():
         n_validate = len(labeled_images) - n_train
         random.shuffle(labeled_images)
         """ a[start:end] start (inclusive) to end (exclusive)"""
-        self.train_images = [image['array'] for image in labeled_images[0:n_train]]
-        self.train_labels = [image['label'] for image in labeled_images[0:n_train]]
-        self.validate_images = [image['array'] for image in labeled_images[n_train:n_train + n_validate]]
-        self.validate_labels = [image['label'] for image in labeled_images[n_train:n_train + n_validate]]
+        self.train = labeled_images[0:n_train]
+        self.validate = labeled_images[n_train:n_train + n_validate]
 
-        return self.train_images,\
-               self.train_labels,\
-               self.validate_images,\
-               self.validate_labels
+        return [image['array'] for image in self.train], \
+               [image['label'] for image in self.train], \
+               [image['array'] for image in self.validate], \
+               [image['label'] for image in self.validate]
 
+    def get_random_train_batch(self, batch_size=10):
+        if self.train is None:
+            self.get_data()
 
+        assert batch_size <= len(self.train)
+        shuffled_train = self.train[:]
+        random.shuffle(shuffled_train)
+        batch = shuffled_train[0:batch_size]
+        return [image['array'] for image in batch], \
+               [image['label'] for image in batch], \
