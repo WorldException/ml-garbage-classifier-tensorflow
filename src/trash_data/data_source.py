@@ -44,7 +44,7 @@ class DataSource():
             https://stackoverflow.com/questions/13550376/pil-image-to-array-numpy-array-to-array-python/42036542#42036542
             """
             im_arr = np.fromstring(image.tobytes(), dtype=np.uint8)
-            im_arr = im_arr.reshape((image.size[0]), image.size[1])
+            im_arr = im_arr.reshape((image.size[1]), image.size[0])
             labeled_image['array'] = im_arr
 
         """ Assign images to train/validate lists """
@@ -68,5 +68,5 @@ class DataSource():
         shuffled_train = self.train[:]
         random.shuffle(shuffled_train)
         batch = shuffled_train[0:batch_size]
-        return [image['array'] for image in batch], \
+        return [image['array'].reshape(-1) for image in batch], \
                [image['label'] for image in batch], \
