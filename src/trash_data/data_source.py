@@ -24,7 +24,13 @@ class DataSource():
         """ Find the image pathnames, where each folder is a label. """
         folders = os.listdir(path)
         n_labels = len(folders)
+        ignore_labels = ['cardboard']
+
         for index, label in enumerate(folders):
+            """ Skip ignored labels """
+            if label in ignore_labels:
+                continue
+
             one_hot = np.zeros(n_labels)
             one_hot[index] = 1
             files = os.listdir(join(path, label))

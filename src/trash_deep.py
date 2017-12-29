@@ -79,7 +79,7 @@ weight_plotter = WeightPlotter(4, 4)
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for step in range(20000):
-        batch_images, batch_labels = ds.get_random_train_batch(50)
+        batch_images, batch_labels = ds.get_random_train_batch(16)
 
         if step % 10 == 0:
             train_accuracy = accuracy.eval(feed_dict={
