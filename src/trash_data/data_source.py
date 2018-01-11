@@ -5,11 +5,12 @@ import numpy as np
 import random
 
 class DataSource():
-    def __init__(self, percent_train=0.8):
+    def __init__(self, percent_train=0.8, shape=None):
         assert percent_train < 1.0
         self.train = None
         self.validate = None
         self.percent_train=percent_train
+        self.shape = shape
 
     def get_data(self):
         if self.train is not None:
@@ -24,7 +25,7 @@ class DataSource():
         """ Find the image pathnames, where each folder is a label. """
         folders = os.listdir(path)
         n_labels = len(folders)
-        ignore_labels = ['cardboard']
+        ignore_labels = ['cardboard', 'plastic', 'metal', 'trash']
 
         for index, label in enumerate(folders):
             """ Skip ignored labels """
@@ -45,12 +46,16 @@ class DataSource():
         for labeled_image in labeled_images:
             """ The added .convert("L") converts the image to greyscale """
             image = Image.open(labeled_image['image_path']).convert("L")
+
+            if self.shape is not None:
+                image = image.resize(self.shape, resample=Image.BILINEAR)
+
             """
             Fast PIL > numpy conversion
             https://stackoverflow.com/questions/13550376/pil-image-to-array-numpy-array-to-array-python/42036542#42036542
             """
             im_arr = np.fromstring(image.tobytes(), dtype=np.uint8)
-            im_arr = im_arr.reshape((image.size[1]), image.size[0])
+            im_arr = np.reshape(im_arr, (image.size[0], image.size[1]))
             labeled_image['array'] = im_arr
 
         """ Assign images to train/validate lists """
@@ -76,3 +81,6 @@ class DataSource():
         batch = shuffled_train[0:batch_size]
         return [image['array'].reshape(-1) for image in batch], \
                [image['label'] for image in batch], \
+
+    def get_shape(self):
+        return self.get_data()[0][0].shape
