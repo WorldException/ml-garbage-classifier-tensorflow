@@ -71,3 +71,60 @@ class CIFARDataSource(DataSource):
             batch_labels.append(self.labels[index])
 
         return batch_data, batch_labels
+
+class ImageDataSource(DataSource):
+    """
+    Expects a directory of subdirectories, with each subdirectory being a label and containing images.
+    """
+    def __init__(self, path, shape=None, ignored_labels=[]):
+        import os
+        from os.path import join
+        import numpy as np
+        from PIL import Image
+
+        self.data = None
+        self.labels = None
+
+        labeled_images = []
+        subdirs = os.listdir(path)
+        n_labels = len(subdirs)
+
+        """ Retrieve all the image pathnames and labels """
+        for index, label in enumerate(subdirs):
+            """ Skip ignored lables """
+            if label in ignored_labels:
+                continue
+
+            one_hot = np.zeros(n_labels)
+            one_hot[index] = 1
+            files = os.listdir(join(path, label))
+            for file in files:
+                full_image_path = join(join(path, label), file)
+                labeled_images.append({
+                    'image_path': full_image_path,
+                    'label': one_hot
+                })
+
+        """ Load image data from pathnames """
+        for labeled_image in labeled_images:
+            """ The added .convert("L") converts the image to greyscale """
+            image = Image.open(labeled_image['image_path']).convert("L")
+
+            if shape is not None:
+                image = image.resize(self.shape, resample=Image.BILINEAR)
+
+            """
+            Fast PIL > numpy conversion
+            https://stackoverflow.com/questions/13550376/pil-image-to-array-numpy-array-to-array-python/42036542#42036542
+            """
+            im_arr = np.fromstring(image.tobytes(), dtype=np.uint8)
+            im_arr = np.reshape(im_arr, (image.size[0], image.size[1]))
+            labeled_image['array'] = im_arr
+
+        self.data = labeled_images
+
+    def get_image_shape(self):
+        pass
+
+    def get_batch(self, batch_size):
+        return self.data
