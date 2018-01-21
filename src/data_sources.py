@@ -3,9 +3,17 @@ class DataSource:
         raise NotImplementedError("Pleast implement this method")
 
     def get_batch(self, batch_size):
+        """
+
+        :return: features, labels
+        """
         raise NotImplementedError("Pleast implement this method")
 
     def get_image_shape(self):
+        """
+
+        :return: image width, image height, image depth
+        """
         raise NotImplementedError("Pleast implement this method")
 
 class CIFARDataSource(DataSource):
@@ -107,8 +115,7 @@ class ImageDataSource(DataSource):
 
         """ Load image data from pathnames """
         for labeled_image in labeled_images:
-            """ The added .convert("L") converts the image to greyscale """
-            image = Image.open(labeled_image['image_path']).convert("L")
+            image = Image.open(labeled_image['image_path']).convert('RGB')
 
             if shape is not None:
                 image = image.resize(self.shape, resample=Image.BILINEAR)
@@ -118,13 +125,19 @@ class ImageDataSource(DataSource):
             https://stackoverflow.com/questions/13550376/pil-image-to-array-numpy-array-to-array-python/42036542#42036542
             """
             im_arr = np.fromstring(image.tobytes(), dtype=np.uint8)
-            im_arr = np.reshape(im_arr, (image.size[0], image.size[1]))
+            im_arr = np.reshape(im_arr, (image.size[0], image.size[1], 3))
             labeled_image['array'] = im_arr
 
         self.data = labeled_images
 
     def get_image_shape(self):
-        pass
+        return self.data[0]['array'].shape[0], self.data[0]['array'].shape[1], 3
 
-    def get_batch(self, batch_size):
-        return self.data
+    def get_batch(self, batch_size=10):
+        assert batch_size <= len(self.data)
+        import random
+        shuffled_data = self.data[:]
+        random.shuffle(shuffled_data)
+        batch = shuffled_data[0:batch_size]
+        return [image['array'] for image in batch],\
+               [image['label'] for image in batch]
