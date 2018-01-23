@@ -118,7 +118,7 @@ class ImageDataSource(DataSource):
             image = Image.open(labeled_image['image_path']).convert('RGB')
 
             if shape is not None:
-                image = image.resize(self.shape, resample=Image.BILINEAR)
+                image = image.resize(shape, resample=Image.BILINEAR)
 
             """
             Fast PIL > numpy conversion

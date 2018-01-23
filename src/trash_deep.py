@@ -1,8 +1,9 @@
 import tensorflow as tf
-from data_sources import CIFARDataSource
+from data_sources import CIFARDataSource, ImageDataSource
 
-BATCH_SIZE = 128
-NUM_LABELS = 10
+BATCH_SIZE=32
+NUM_LABELS=6
+IMAGE_SHAPE=(512/4, 384/4)
 
 def inference(images):
     """ Conv1 """
@@ -38,7 +39,7 @@ def inference(images):
     """ FC1 """
     with tf.variable_scope('fc1') as scope:
         reshape = tf.reshape(pool2, [BATCH_SIZE, -1])
-        weights = tf.get_variable('weights', [32/4*32/4*64, 384], initializer=None, dtype=tf.float32)
+        weights = tf.get_variable('weights', [IMAGE_SHAPE[0]/4*IMAGE_SHAPE[1]/4*64, 384], initializer=None, dtype=tf.float32)
         biases = tf.get_variable('biases', [384], initializer=tf.constant_initializer(0.1), dtype=tf.float32)
         fc1 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name=scope.name)
 
@@ -50,9 +51,8 @@ def inference(images):
 
     """ Softmax """
     with tf.variable_scope('softmax_linear') as scope:
-        num_classes = 10
-        weights = tf.get_variable('weights', [192, num_classes], initializer=None, dtype=tf.float32)
-        biases = tf.get_variable('biases', [num_classes], initializer=tf.constant_initializer(0.0), dtype=tf.float32)
+        weights = tf.get_variable('weights', [192, NUM_LABELS], initializer=None, dtype=tf.float32)
+        biases = tf.get_variable('biases', [NUM_LABELS], initializer=tf.constant_initializer(0.0), dtype=tf.float32)
         softmax_linear = tf.add(tf.matmul(fc2, weights), biases, name=scope.name)
 
     return softmax_linear
@@ -64,15 +64,17 @@ def loss(logits, labels):
     return cross_entropy_mean
 
 def train():
-    ds = CIFARDataSource()
-    images = tf.placeholder(tf.float32, shape=[None, 32, 32, 3])
+    # ds = CIFARDataSource()
+    ds = ImageDataSource(path='./trash_data/dataset', shape=IMAGE_SHAPE)
+    image_shape = ds.get_image_shape()
+    images = tf.placeholder(tf.float32, shape=[None, image_shape[0], image_shape[1], 3])
     labels = tf.placeholder(tf.float32, shape=[None, NUM_LABELS])
     with tf.Session() as sess:
         loss_op = loss(inference(images), labels)
         train_step = tf.train.AdamOptimizer(1e-3).minimize(loss_op)
 
         sess.run(tf.global_variables_initializer())
-        for step in range(20000):
+        for step in range(100000):
             batch_images, batch_labels = ds.get_batch(BATCH_SIZE)
 
             if step % 10 == 0:
