@@ -36,5 +36,9 @@ Get CIFAR-10 Dataset [here](https://www.cs.toronto.edu/~kriz/cifar.html).
 #### Reference
 [Pillow Docs](http://pillow.readthedocs.io/en/3.4.x/reference/Image.html)
 
+#### Blender
+
+I'm trying to use Blender to generate new training data. I'm using predef files for editing Blender scripts in an external editor, as described [here](http://jameskersey.com/2013/09/11/python_editing_for_blender_part_one).
+
 #### Acknowledgements:
 Trash Dataset: https://github.com/garythung/trashnet
