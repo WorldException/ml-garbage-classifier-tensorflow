@@ -50,9 +50,6 @@ def camera_view_bounds_2d(scene, camera_object, mesh_object):
         lx.append(x)
         ly.append(y)
 
-    print(lx)
-    print(ly)
-
     min_x = np.clip(min(lx), 0.0, 1.0)
     min_y = np.clip(min(ly), 0.0, 1.0)
     max_x = np.clip(max(lx), 0.0, 1.0)
@@ -66,7 +63,6 @@ def camera_view_bounds_2d(scene, camera_object, mesh_object):
     dim_x = render.resolution_x * fac
     dim_y = render.resolution_y * fac
 
-    print((min_x, min_y), (max_x, max_y))
     return (min_x, min_y), (max_x, max_y)
 
 if __name__ == '__main__':

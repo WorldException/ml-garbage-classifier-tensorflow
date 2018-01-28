@@ -2,6 +2,7 @@ import bpy, os
 from math import sin, cos, pi
 import numpy as np
 import boundingbox
+import json
 
 camera = bpy.data.objects['Camera']
 radians_in_circle = 2.0 * pi
@@ -12,6 +13,9 @@ original_position = np.matrix([
     [0],
     [2]
 ])
+
+""" This will store the bonding boxes """
+labels = []
 
 for i in range(0, steps + 1):
     for j in range(0, steps + 1):
@@ -38,5 +42,24 @@ for i in range(0, steps + 1):
         
         # Rendering
         # https://blender.stackexchange.com/questions/1101/blender-rendering-automation-build-script
-        bpy.context.scene.render.filepath = os.path.join('../renders/', '{}y-{}p'.format(str(i), str(j)))
+        filename = '{}y-{}p.png'.format(str(i), str(j))
+        bpy.context.scene.render.filepath = os.path.join('./renders/', filename)
         bpy.ops.render.render(write_still=True)
+
+        """ Get the bounding box coordinates """
+        scene = bpy.data.scenes['Scene']
+        cube = bpy.data.objects['Cube']
+        bounding_box_coords = boundingbox.camera_view_bounds_2d(scene, camera, cube)
+        labels.append({
+            'image': filename,
+            'bounding_box': {
+                'x1': bounding_box_coords[0][0],
+                'y1': bounding_box_coords[0][1],
+                'x2': bounding_box_coords[1][0],
+                'y2': bounding_box_coords[1][1]
+            }
+        })
+
+    """ Write labels to file """
+    with open('./renders/labels.json', 'w+') as f:
+        json.dump(labels, f, sort_keys=True, indent=4, separators=(',', ': '))
