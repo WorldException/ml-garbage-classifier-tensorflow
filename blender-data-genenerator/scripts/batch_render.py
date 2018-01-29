@@ -49,16 +49,21 @@ for i in range(0, steps + 1):
         """ Get the bounding box coordinates """
         scene = bpy.data.scenes['Scene']
         cube = bpy.data.objects['Cube']
-        bounding_box_coords = boundingbox.camera_view_bounds_2d(scene, camera, cube)
-        labels.append({
-            'image': filename,
-            'bounding_box': {
-                'x1': bounding_box_coords[0][0],
-                'y1': bounding_box_coords[0][1],
-                'x2': bounding_box_coords[1][0],
-                'y2': bounding_box_coords[1][1]
+        bounding_box = boundingbox.camera_view_bounds_2d(scene, camera, cube)
+        label_entry = {
+            'image': filename
+        }
+        if boundingbox:
+            label_entry['bounding_box'] = {
+                'x1': bounding_box[0][0],
+                'y1': bounding_box[0][1],
+                'x2': bounding_box[1][0],
+                'y2': bounding_box[1][1]
             }
-        })
+        else:
+            label_entry['bounding_box'] = None
+
+        labels.append(label_entry)
 
     """ Write labels to file """
     with open('./renders/labels.json', 'w+') as f:

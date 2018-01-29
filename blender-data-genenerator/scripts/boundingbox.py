@@ -9,7 +9,7 @@ def camera_view_bounds_2d(scene, camera_object, mesh_object):
 
     Gets the camera frame bounding box, which by default is returned without any transformations applied.
     Create a new mesh object based on mesh_object and undo any transformations so that it is in the same space as the
-    camera frame. Find the min/max vertex coordinates of the mesh visible in the frame.
+    camera frame. Find the min/max vertex coordinates of the mesh visible in the frame, or None if the mesh is not in view.
 
     :param scene:
     :param camera_object:
@@ -50,12 +50,20 @@ def camera_view_bounds_2d(scene, camera_object, mesh_object):
         lx.append(x)
         ly.append(y)
 
+    bpy.data.meshes.remove(mesh)
+
+    """ Image is not in view if all the mesh verts were ignored """
+    if not lx or not ly:
+        return None
+
     min_x = np.clip(min(lx), 0.0, 1.0)
     min_y = np.clip(min(ly), 0.0, 1.0)
     max_x = np.clip(max(lx), 0.0, 1.0)
     max_y = np.clip(max(ly), 0.0, 1.0)
 
-    bpy.data.meshes.remove(mesh)
+    """ Image is not in view if both bounding points exist on the same side """
+    if min_x == max_x or min_y == max_y:
+        return None
 
     """ Figure out the rendered image size """
     render = scene.render
