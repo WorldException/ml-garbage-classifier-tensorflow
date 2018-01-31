@@ -16,6 +16,7 @@ class DataSource:
         """
         raise NotImplementedError("Pleast implement this method")
 
+
 class CIFARDataSource(DataSource):
     def __init__(self):
         import cPickle
@@ -80,6 +81,7 @@ class CIFARDataSource(DataSource):
 
         return batch_data, batch_labels
 
+
 class ImageDataSource(DataSource):
     """
     Expects a directory of subdirectories, with each subdirectory being a label and containing images.
@@ -141,3 +143,49 @@ class ImageDataSource(DataSource):
         batch = shuffled_data[0:batch_size]
         return [image['array'] for image in batch],\
                [image['label'] for image in batch]
+
+
+class FlatImageDataSource(DataSource):
+    def __init__(self, pathname, cached=False):
+        import os
+        import json
+        import pickle
+        import numpy
+        from PIL import Image
+
+        dir_name = os.path.dirname(pathname)
+        pickle_pathname = os.path.join(dir_name, 'labels.pickle')
+        if cached and os.path.isfile(pickle_pathname):
+            with open(pickle_pathname, 'rb') as fp:
+                self.data = pickle.load(fp)
+
+        else:
+            with open(pathname) as fp:
+                data = json.load(fp)
+                fp.close()
+
+            self.data = []
+            for entry in data:
+                image_path = os.path.abspath(os.path.join(dir_name, entry['image']))
+                image = Image.open(image_path).convert('RGB')
+                image_array = numpy.fromstring(image.tobytes(), dtype=numpy.uint8)
+                image_array = numpy.reshape(image_array, (image.size[0], image.size[1], 3))
+                self.data.append({
+                    'image': image_array,
+                    'name': entry['name'],
+                    'bounding_box': entry['bounding_box']
+                })
+
+            with open(pickle_pathname, 'wb+') as fp:
+                pickle.dump(self.data, fp)
+
+    def get_image_shape(self):
+        return self.data[0]['image'].shape[0], self.data[0]['image'].shape[1], 3
+
+    def get_batch(self, batch_size=10):
+        assert batch_size <= len(self.data)
+        import random
+        shuffled_data = self.data[:]
+        random.shuffle(shuffled_data)
+        batch = shuffled_data[0:batch_size]
+        return batch

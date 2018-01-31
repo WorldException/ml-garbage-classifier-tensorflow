@@ -51,7 +51,8 @@ for i in range(0, steps + 1):
         cube = bpy.data.objects['Cube']
         bounding_box = boundingbox.camera_view_bounds_2d(scene, camera, cube)
         label_entry = {
-            'image': filename
+            'image': filename,
+            'name': cube.name
         }
         if boundingbox:
             label_entry['bounding_box'] = {
