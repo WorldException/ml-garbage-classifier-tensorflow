@@ -165,6 +165,8 @@ class FlatImageDataSource(DataSource):
                 fp.close()
 
             self.data = []
+            names_one_hot = self.__get_one_hot_names(data)
+
             for entry in data:
                 image_path = os.path.abspath(os.path.join(dir_name, entry['image']))
                 image = Image.open(image_path).convert('RGB')
@@ -172,7 +174,7 @@ class FlatImageDataSource(DataSource):
                 image_array = numpy.reshape(image_array, (image.size[0], image.size[1], 3))
                 self.data.append({
                     'image': image_array,
-                    'name': entry['name'],
+                    'name': names_one_hot[entry['name']],
                     'bounding_box': entry['bounding_box']
                 })
 
@@ -189,3 +191,23 @@ class FlatImageDataSource(DataSource):
         random.shuffle(shuffled_data)
         batch = shuffled_data[0:batch_size]
         return batch
+
+    def __get_one_hot_names(self, data):
+        """
+        :param data: The contents of the label file
+        :type data: dict
+        :return: A list of one-hot vectors
+        """
+        import numpy
+
+        names = set()
+        for entry in data:
+            names.add(entry['name'])
+
+        names_one_hot = {}
+        for i, name in enumerate(names):
+            zeros = numpy.zeros(shape=(len(names), 1))
+            zeros[i, 0] = 1.0
+            names_one_hot[name] = zeros
+
+        return names_one_hot
