@@ -1,10 +1,23 @@
 import bpy, os
 from math import sin, cos, pi
 import numpy as np
-import boundingbox
 import json
+import sys
+
+"""
+Add scripts folder to Blender's Python interpreter and reload all scripts.
+http://web.purplefrog.com/~thoth/blender/python-cookbook/import-python.html
+"""
+dir = os.path.dirname(bpy.data.filepath)
+if not dir in sys.path:
+    sys.path.append(dir)
+
+import boundingbox
+import importlib
+importlib.reload(boundingbox)
 
 camera = bpy.data.objects['Camera']
+meshes = ['Cube', 'Sphere']
 radians_in_circle = 2.0 * pi
 steps = 10
 
@@ -44,25 +57,25 @@ for i in range(0, steps + 1):
         # https://blender.stackexchange.com/questions/1101/blender-rendering-automation-build-script
         filename = '{}y-{}p.png'.format(str(i), str(j))
         bpy.context.scene.render.filepath = os.path.join('./renders/', filename)
-        bpy.ops.render.render(write_still=True)
+        # bpy.ops.render.render(write_still=True)
 
-        """ Get the bounding box coordinates """
         scene = bpy.data.scenes['Scene']
-        cube = bpy.data.objects['Cube']
-        bounding_box = boundingbox.camera_view_bounds_2d(scene, camera, cube)
         label_entry = {
             'image': filename,
-            'name': cube.name
+            'meshes': {}
         }
-        if boundingbox:
-            label_entry['bounding_box'] = {
-                'x1': bounding_box[0][0],
-                'y1': bounding_box[0][1],
-                'x2': bounding_box[1][0],
-                'y2': bounding_box[1][1]
-            }
-        else:
-            label_entry['bounding_box'] = None
+
+        """ Get the bounding box coordinates for each mesh """
+        for mesh_name in meshes:
+            mesh = bpy.data.objects[mesh_name]
+            bounding_box = boundingbox.camera_view_bounds_2d(scene, camera, mesh)
+            if bounding_box:
+                label_entry['meshes'][mesh_name] = {
+                    'x1': bounding_box[0][0],
+                    'y1': bounding_box[0][1],
+                    'x2': bounding_box[1][0],
+                    'y2': bounding_box[1][1]
+                }
 
         labels.append(label_entry)
 

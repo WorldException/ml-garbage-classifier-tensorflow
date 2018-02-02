@@ -165,21 +165,23 @@ class FlatImageDataSource(DataSource):
                 fp.close()
 
             self.data = []
-            names_one_hot = self.__get_one_hot_names(data)
+            visibility_matrices = self.__get_visibility_matrices(data)
 
-            for entry in data:
+            for i, entry in enumerate(data):
                 image_path = os.path.abspath(os.path.join(dir_name, entry['image']))
                 image = Image.open(image_path).convert('RGB')
                 image_array = numpy.fromstring(image.tobytes(), dtype=numpy.uint8)
                 image_array = numpy.reshape(image_array, (image.size[0], image.size[1], 3))
                 self.data.append({
                     'image': image_array,
-                    'name': names_one_hot[entry['name']],
-                    'bounding_box': entry['bounding_box']
+                    'visibility': visibility_matrices[i],
+                    'bounding_boxes': [value for key, value in entry['meshes'].items()]
                 })
 
             with open(pickle_pathname, 'wb+') as fp:
                 pickle.dump(self.data, fp)
+
+        print self.data
 
     def get_image_shape(self):
         return self.data[0]['image'].shape[0], self.data[0]['image'].shape[1], 3
@@ -192,7 +194,7 @@ class FlatImageDataSource(DataSource):
         batch = shuffled_data[0:batch_size]
         return batch
 
-    def __get_one_hot_names(self, data):
+    def __get_visibility_matrices(self, data):
         """
         :param data: The contents of the label file
         :type data: dict
@@ -200,14 +202,20 @@ class FlatImageDataSource(DataSource):
         """
         import numpy
 
+        """ Figure out how many unique names there are """
         names = set()
         for entry in data:
-            names.add(entry['name'])
+            for mesh in entry['meshes']:
+                names.add(mesh)
 
-        names_one_hot = {}
-        for i, name in enumerate(names):
-            zeros = numpy.zeros(shape=(len(names), 1))
-            zeros[i, 0] = 1.0
-            names_one_hot[name] = zeros
+        n_unique_names = len(names)
 
-        return names_one_hot
+        matrices = []
+        for entry in data:
+            matrix = numpy.zeros(shape=(n_unique_names, 1))
+            for i, name in enumerate(entry['meshes']):
+                matrix[i, 0] = 1.
+
+            matrices.append(matrix)
+
+        return matrices
