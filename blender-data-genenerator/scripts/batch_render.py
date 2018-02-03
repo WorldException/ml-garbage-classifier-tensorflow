@@ -16,7 +16,7 @@ import boundingbox
 import importlib
 importlib.reload(boundingbox)
 
-def render(scene, camera_object, mesh_objects, camera_steps):
+def render(scene, camera_object, mesh_objects, camera_steps, file, file_prefix="render"):
     radians_in_circle = 2.0 * pi
 
     original_position = np.matrix([
@@ -53,9 +53,9 @@ def render(scene, camera_object, mesh_objects, camera_steps):
 
             # Rendering
             # https://blender.stackexchange.com/questions/1101/blender-rendering-automation-build-script
-            filename = '{}y-{}p.png'.format(str(i), str(j))
+            filename = '{}-{}y-{}p.png'.format(str(file_prefix), str(i), str(j))
             bpy.context.scene.render.filepath = os.path.join('./renders/', filename)
-            # bpy.ops.render.render(write_still=True)
+            bpy.ops.render.render(write_still=True)
 
             scene = bpy.data.scenes['Scene']
             label_entry = {
@@ -77,13 +77,27 @@ def render(scene, camera_object, mesh_objects, camera_steps):
             labels.append(label_entry)
 
     """ Write labels to file """
+    json.dump(labels, file, sort_keys=True, indent=4, separators=(',', ': '))
+
+
+def batch_render(scene, camera_object, mesh_objects):
+    import scene_setup
+
+    camera_steps = 10
+    scene_setup_steps = 10
+    spawn_range = [
+        (-10, 10),
+        (-10, 10),
+        (5, 10)
+    ]
     with open('./renders/labels.json', 'w+') as f:
-        json.dump(labels, f, sort_keys=True, indent=4, separators=(',', ': '))
+        for i in range(0, scene_setup_steps):
+            scene_setup.simulate(scene, mesh_objects, spawn_range)
+            render(scene, camera_object, mesh_objects, camera_steps, f, file_prefix=i)
 
 if __name__ == '__main__':
     scene = bpy.data.scenes['Scene']
     camera_object = bpy.data.objects['Camera']
-    camera_steps = 10
     mesh_names = ['Cube', 'Sphere']
     mesh_objects = [bpy.data.objects[name] for name in mesh_names]
-    render(scene, camera_object, mesh_objects, camera_steps)
+    batch_render(scene, camera_object, mesh_objects)
