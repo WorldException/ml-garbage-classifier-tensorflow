@@ -16,9 +16,12 @@ import boundingbox
 import importlib
 importlib.reload(boundingbox)
 
-def render(scene, camera_object, mesh_objects, camera_steps, file, file_prefix="render"):
-    radians_in_circle = 2.0 * pi
+def render(scene, camera_object, mesh_objects, camera_steps, file_prefix="render"):
+    """
+    Renders the scene at different camera angles to a file, and returns a list of label data
+    """
 
+    radians_in_circle = 2.0 * pi
     original_position = np.matrix([
         [8],
         [0],
@@ -76,13 +79,11 @@ def render(scene, camera_object, mesh_objects, camera_steps, file, file_prefix="
 
             labels.append(label_entry)
 
-    """ Write labels to file """
-    json.dump(labels, file, sort_keys=True, indent=4, separators=(',', ': '))
+    return labels
 
 
 def batch_render(scene, camera_object, mesh_objects):
     import scene_setup
-
     camera_steps = 10
     scene_setup_steps = 10
     spawn_range = [
@@ -90,10 +91,16 @@ def batch_render(scene, camera_object, mesh_objects):
         (-10, 10),
         (5, 10)
     ]
+    labels = []
+
+    for i in range(0, scene_setup_steps):
+        scene_setup.simulate(scene, mesh_objects, spawn_range)
+        scene_labels = render(scene, camera_object, mesh_objects, camera_steps, file_prefix=i)
+        labels += scene_labels # Merge lists
+
     with open('./renders/labels.json', 'w+') as f:
-        for i in range(0, scene_setup_steps):
-            scene_setup.simulate(scene, mesh_objects, spawn_range)
-            render(scene, camera_object, mesh_objects, camera_steps, f, file_prefix=i)
+        json.dump(labels, f, sort_keys=True, indent=4, separators=(',', ': '))
+
 
 if __name__ == '__main__':
     scene = bpy.data.scenes['Scene']
