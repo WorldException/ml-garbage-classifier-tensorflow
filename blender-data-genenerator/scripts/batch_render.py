@@ -94,7 +94,7 @@ def batch_render(scene, camera_object, mesh_objects):
     labels = []
 
     for i in range(0, scene_setup_steps):
-        scene_setup.simulate(scene, mesh_objects, spawn_range)
+        scene_setup.simulate(scene, mesh_objects, spawn_range, 0.75)
         scene_labels = render(scene, camera_object, mesh_objects, camera_steps, file_prefix=i)
         labels += scene_labels # Merge lists
 
