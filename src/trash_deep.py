@@ -1,9 +1,14 @@
 import tensorflow as tf
-from data_sources import CIFARDataSource, ImageDataSource
+from data_sources import ImageDataSource
+
+"""
+Refer to https://www.tensorflow.org/tutorials/deep_cnn
+"""
 
 BATCH_SIZE=32
-NUM_LABELS=6
-IMAGE_SHAPE=(512/4, 384/4)
+NUM_LABELS=2
+ds = ImageDataSource(pathname='../blender-data-generator/renders/labels.json', cached=True)
+IMAGE_SHAPE = ds.get_image_shape()
 
 def inference(images):
     """ Conv1 """
@@ -49,36 +54,40 @@ def inference(images):
         biases = tf.get_variable('biases', [192], initializer=tf.constant_initializer(0.1), dtype=tf.float32)
         fc2 = tf.nn.relu(tf.matmul(fc1, weights) + biases, name=scope.name)
 
-    """ Softmax """
-    with tf.variable_scope('softmax_linear') as scope:
+    """ Linear """
+    with tf.variable_scope('linear') as scope:
         weights = tf.get_variable('weights', [192, NUM_LABELS], initializer=None, dtype=tf.float32)
         biases = tf.get_variable('biases', [NUM_LABELS], initializer=tf.constant_initializer(0.0), dtype=tf.float32)
-        softmax_linear = tf.add(tf.matmul(fc2, weights), biases, name=scope.name)
+        linear = tf.add(tf.matmul(fc2, weights), biases, name=scope.name)
 
-    return softmax_linear
+    return linear
 
 def loss(logits, labels):
-    labels = tf.cast(labels, tf.int64)
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits, name='cross_entropy_per_example')
+    labels = tf.cast(labels, tf.int32)
+
+    # cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits, name='cross_entropy_per_example')
+
+    labels = tf.cast(labels, tf.float32) # Need to do this because labels is tf.int32 while logits is tf.float32
+    cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=logits, name='sigmoid_cross_entropy')
     cross_entropy_mean = tf.reduce_mean(cross_entropy, name='cross_entropy')
+
     return cross_entropy_mean
 
 def train():
-    # ds = CIFARDataSource()
-    ds = ImageDataSource(path='./trash_data/dataset', shape=IMAGE_SHAPE)
-    image_shape = ds.get_image_shape()
-    images = tf.placeholder(tf.float32, shape=[None, image_shape[0], image_shape[1], 3])
+    images = tf.placeholder(tf.float32, shape=[None, IMAGE_SHAPE[0], IMAGE_SHAPE[1], 3])
     labels = tf.placeholder(tf.float32, shape=[None, NUM_LABELS])
     with tf.Session() as sess:
         loss_op = loss(inference(images), labels)
-        train_step = tf.train.AdamOptimizer(1e-3).minimize(loss_op)
+        train_step = tf.train.AdamOptimizer(1e-4).minimize(loss_op)
 
         sess.run(tf.global_variables_initializer())
-        for step in range(100000):
-            batch_images, batch_labels = ds.get_batch(BATCH_SIZE)
+        for step in range(10000):
+            batch = ds.get_batch(BATCH_SIZE)
+            batch_images = [item['image'] for item in batch]
+            batch_labels = [item['visibility'] for item in batch]
 
-            if step % 10 == 0:
-                print 'Step {}: {}'.format(step, loss_op.eval(
+            if step % 100 == 0:
+                print 'Loss at step {}: {}'.format(step, loss_op.eval(
                     feed_dict={
                         images: batch_images,
                         labels: batch_labels,

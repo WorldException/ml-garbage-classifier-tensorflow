@@ -83,69 +83,6 @@ class CIFARDataSource(DataSource):
 
 
 class ImageDataSource(DataSource):
-    """
-    Expects a directory of subdirectories, with each subdirectory being a label and containing images.
-    """
-    def __init__(self, path, shape=None, ignored_labels=[]):
-        import os
-        from os.path import join
-        import numpy as np
-        from PIL import Image
-
-        self.data = None
-        self.labels = None
-
-        labeled_images = []
-        subdirs = os.listdir(path)
-        n_labels = len(subdirs)
-
-        """ Retrieve all the image pathnames and labels """
-        for index, label in enumerate(subdirs):
-            """ Skip ignored lables """
-            if label in ignored_labels:
-                continue
-
-            one_hot = np.zeros(n_labels)
-            one_hot[index] = 1
-            files = os.listdir(join(path, label))
-            for file in files:
-                full_image_path = join(join(path, label), file)
-                labeled_images.append({
-                    'image_path': full_image_path,
-                    'label': one_hot
-                })
-
-        """ Load image data from pathnames """
-        for labeled_image in labeled_images:
-            image = Image.open(labeled_image['image_path']).convert('RGB')
-
-            if shape is not None:
-                image = image.resize(shape, resample=Image.BILINEAR)
-
-            """
-            Fast PIL > numpy conversion
-            https://stackoverflow.com/questions/13550376/pil-image-to-array-numpy-array-to-array-python/42036542#42036542
-            """
-            im_arr = np.fromstring(image.tobytes(), dtype=np.uint8)
-            im_arr = np.reshape(im_arr, (image.size[0], image.size[1], 3))
-            labeled_image['array'] = im_arr
-
-        self.data = labeled_images
-
-    def get_image_shape(self):
-        return self.data[0]['array'].shape[0], self.data[0]['array'].shape[1], 3
-
-    def get_batch(self, batch_size=10):
-        assert batch_size <= len(self.data)
-        import random
-        shuffled_data = self.data[:]
-        random.shuffle(shuffled_data)
-        batch = shuffled_data[0:batch_size]
-        return [image['array'] for image in batch],\
-               [image['label'] for image in batch]
-
-
-class FlatImageDataSource(DataSource):
     def __init__(self, pathname, cached=False):
         import os
         import json
@@ -170,6 +107,10 @@ class FlatImageDataSource(DataSource):
             for i, entry in enumerate(data):
                 image_path = os.path.abspath(os.path.join(dir_name, entry['image']))
                 image = Image.open(image_path).convert('RGB')
+                """
+                Fast PIL > numpy conversion
+                https://stackoverflow.com/questions/13550376/pil-image-to-array-numpy-array-to-array-python/42036542#42036542
+                """
                 image_array = numpy.fromstring(image.tobytes(), dtype=numpy.uint8)
                 image_array = numpy.reshape(image_array, (image.size[0], image.size[1], 3))
                 self.data.append({
@@ -180,8 +121,6 @@ class FlatImageDataSource(DataSource):
 
             with open(pickle_pathname, 'wb+') as fp:
                 pickle.dump(self.data, fp)
-
-        print self.data
 
     def get_image_shape(self):
         return self.data[0]['image'].shape[0], self.data[0]['image'].shape[1], 3
@@ -212,9 +151,9 @@ class FlatImageDataSource(DataSource):
 
         matrices = []
         for entry in data:
-            matrix = numpy.zeros(shape=(n_unique_names, 1))
+            matrix = numpy.zeros(shape=(n_unique_names))
             for i, name in enumerate(entry['meshes']):
-                matrix[i, 0] = 1.
+                matrix[i] = 1.
 
             matrices.append(matrix)
 
