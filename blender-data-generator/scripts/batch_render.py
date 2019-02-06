@@ -12,9 +12,12 @@ dir = os.path.dirname(bpy.data.filepath)
 if not dir in sys.path:
     sys.path.append(dir)
 
+import xml_format
 import boundingbox
 import importlib
 importlib.reload(boundingbox)
+
+render_dir = './render'
 
 def render(scene, camera_object, mesh_objects, camera_steps, file_prefix="render"):
     """
@@ -57,12 +60,13 @@ def render(scene, camera_object, mesh_objects, camera_steps, file_prefix="render
             # Rendering
             # https://blender.stackexchange.com/questions/1101/blender-rendering-automation-build-script
             filename = '{}-{}y-{}p.png'.format(str(file_prefix), str(i), str(j))
-            bpy.context.scene.render.filepath = os.path.join('./renders/', filename)
+            bpy.context.scene.render.filepath = os.path.join(render_dir, filename)
             bpy.ops.render.render(write_still=True)
 
             scene = bpy.data.scenes['Scene']
             label_entry = {
                 'image': filename,
+                'fullpath': os.path.join(render_dir, filename),
                 'meshes': {}
             }
 
@@ -78,14 +82,15 @@ def render(scene, camera_object, mesh_objects, camera_steps, file_prefix="render
                     }
 
             labels.append(label_entry)
-
+            # export xml boxes
+            xml_format.dump_labels(label_entry)
     return labels
 
 
 def batch_render(scene, camera_object, mesh_objects):
     import scene_setup
     camera_steps = 10
-    scene_setup_steps = 10
+    scene_setup_steps = 1
     spawn_range = [
         (-10, 10),
         (-10, 10),
@@ -98,7 +103,7 @@ def batch_render(scene, camera_object, mesh_objects):
         scene_labels = render(scene, camera_object, mesh_objects, camera_steps, file_prefix=i)
         labels += scene_labels # Merge lists
 
-    with open('./renders/labels.json', 'w+') as f:
+    with open(os.path.join(render_dir, 'labels.json'), 'w+') as f:
         json.dump(labels, f, sort_keys=True, indent=4, separators=(',', ': '))
 
 
