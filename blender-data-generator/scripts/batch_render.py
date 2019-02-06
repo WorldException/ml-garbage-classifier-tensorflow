@@ -64,9 +64,12 @@ def render(scene, camera_object, mesh_objects, camera_steps, file_prefix="render
             bpy.ops.render.render(write_still=True)
 
             scene = bpy.data.scenes['Scene']
+            w, h = scene.render.resolution_x, scene.render.resolution_y
             label_entry = {
                 'image': filename,
                 'fullpath': os.path.join(render_dir, filename),
+                'width': w,
+                'height': h,
                 'meshes': {}
             }
 
@@ -74,16 +77,26 @@ def render(scene, camera_object, mesh_objects, camera_steps, file_prefix="render
             for object in mesh_objects:
                 bounding_box = boundingbox.camera_view_bounds_2d(scene, camera_object, object)
                 if bounding_box:
+                    """
+                    пересчет с учетом того начала системы координат в левом верхнем углу                    
+                    """
+
                     label_entry['meshes'][object.name] = {
                         'x1': bounding_box[0][0],
                         'y1': bounding_box[0][1],
                         'x2': bounding_box[1][0],
-                        'y2': bounding_box[1][1]
+                        'y2': bounding_box[1][1],
+
+                        'px1': round(bounding_box[0][0] * w),
+                        'py1': h - round(bounding_box[1][1] * h),
+                        'px2': round(bounding_box[1][0] * w),
+                        'py2': h - round(bounding_box[0][1] * h)
                     }
 
             labels.append(label_entry)
             # export xml boxes
             xml_format.dump_labels(label_entry)
+        break
     return labels
 
 

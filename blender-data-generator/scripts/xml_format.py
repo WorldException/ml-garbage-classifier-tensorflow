@@ -27,10 +27,15 @@ tmpl_object="""
         <truncated>0</truncated>
         <difficult>0</difficult>
         <bndbox>
-            <xmin>{box[x1]}</xmin>
-            <ymin>{box[y1]}</ymin>
-            <xmax>{box[x2]}</xmax>
-            <ymax>{box[y2]}</ymax>
+            <xmin>{box[px1]:.0f}</xmin>
+            <ymin>{box[py1]:.0f}</ymin>
+            <xmax>{box[px2]:.0f}</xmax>
+            <ymax>{box[py2]:.0f}</ymax>
+            
+            <axmin>{box[x1]}</axmin>
+            <aymin>{box[y1]}</aymin>
+            <axmax>{box[x2]}</axmax>
+            <aymax>{box[y2]}</aymax>
         </bndbox>
     </object>
 """
@@ -51,8 +56,8 @@ def dump_labels(labels):
         folder='',
         filename=filename,
         fullpath=filename,
-        width=0,
-        height=0,
+        width=labels['width'],
+        height=labels['height'],
         labels=xml_labels
     )
 
