@@ -1,6 +1,7 @@
 import bpy
 import random
 
+
 def simulate(scene, mesh_objects, spawn_range, p_visible):
     scene.frame_set(0)
     for object in mesh_objects:
@@ -17,7 +18,6 @@ def simulate(scene, mesh_objects, spawn_range, p_visible):
 
     for i in range(1, 100):
         scene.frame_set(i)
-
 
 
 if __name__ == '__main__':
