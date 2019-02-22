@@ -14,11 +14,24 @@ if not dir in sys.path:
 
 import xml_format
 import boundingbox
+import sys
+import datetime
 import importlib
 importlib.reload(boundingbox)
 
-render_dir = './render'
+u"""
+Настройки
+"""
+# автоматическое определение пути в зависимости от платформы
+if sys.platform == 'linux':
+    render_dir = './render'
+else:
+    render_dir = 'c:\\render-%s' % datetime.datetime.now().strftime('%Y-%m-%d_%H%M')
 
+# сколько раз повернуть
+camera_steeps = 5
+
+# исходные позиции камеры
 cam_positions = """
 8, 0, 4
 -8, 0, 4
@@ -142,8 +155,8 @@ def render(scene, camera_object, mesh_objects, camera_steps, file_prefix="render
             ])
             pitch_rotation_matrix = np.matrix([
                 [cos(pitch), 0, sin(pitch)],
-                [0, 1, 0],
-                [-sin(pitch), 0, cos(pitch)]
+                [-sin(pitch), 0, cos(pitch)],
+                [0, 0, 1],
             ])
 
             new_position = yaw_rotation_matrix * pitch_rotation_matrix * original_position
@@ -156,30 +169,9 @@ def render(scene, camera_object, mesh_objects, camera_steps, file_prefix="render
     return labels
 
 
-def batch_render(scene, camera_object, mesh_objects):
-    import scene_setup
-    camera_steps = 10
-    scene_setup_steps = 1
-    spawn_range = [
-        (-10, 10),
-        (-10, 10),
-        (5, 10)
-    ]
-    labels = []
-
-    for i in range(0, scene_setup_steps):
-        scene_setup.simulate(scene, mesh_objects, spawn_range, 0.75)
-        scene_labels = render(scene, camera_object, mesh_objects, camera_steps, file_prefix=i)
-        labels += scene_labels # Merge lists
-
-    with open(os.path.join(render_dir, 'labels.json'), 'w+') as f:
-        json.dump(labels, f, sort_keys=True, indent=4, separators=(',', ': '))
-
-
 if __name__ == '__main__':
     scene = bpy.data.scenes['Scene']
     camera_object = bpy.data.objects['Camera']
     mesh_names = ['Cube', 'Sphere']
     mesh_objects = [bpy.data.objects[name] for name in mesh_names]
-    #batch_render(scene, camera_object, mesh_objects)
-    render_cams_steeps(cams, scene, camera_object, mesh_objects, camera_steeps=5)
+    render_cams_steeps(cams, scene, camera_object, mesh_objects, camera_steeps=camera_steeps)

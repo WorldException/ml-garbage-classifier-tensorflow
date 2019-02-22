@@ -36,6 +36,19 @@ for i in range(0, camera_steps + 1):
             [-sin(pitch), 0, cos(pitch)],
             [0, 0, 1],
         ])
+        '''
+        vertical rotate
+        yaw_rotation_matrix = np.matrix([
+            [cos(yaw), -sin(yaw), 0],
+            [sin(yaw), cos(yaw), 0],
+            [0, 0, 1]
+        ])
+        pitch_rotation_matrix = np.matrix([
+            [cos(pitch), 0, sin(pitch)],
+            [0, 1, 0],
+            [-sin(pitch), 0, cos(pitch)]
+        ])
+        '''
 
         new_position = yaw_rotation_matrix * pitch_rotation_matrix * original_position
         print(new_position)
