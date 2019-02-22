@@ -102,18 +102,29 @@ def render_cams(cams, scene, camera_object, mesh_objects, file_prefix="render_ca
     return labels
 
 
-def render(scene, camera_object, mesh_objects, camera_steps, file_prefix="render"):
+def render_cams_steeps(cams, scene, camera_object, mesh_objects, camera_steeps, file_prefix="render_cam"):
+    labels = []
+    for i, cam in enumerate(cams):
+        print(cam)
+        new_position = cam.reshape(3, 1)
+        render(scene, camera_object, mesh_objects, camera_steeps, '%s-%s' % (file_prefix, i), start_position=new_position)
+
+
+def render(scene, camera_object, mesh_objects, camera_steps, file_prefix="render", start_position=None):
     """
     Renders the scene at different camera angles to a file, and returns a list of label data
     """
 
     radians_in_circle = 2.0 * pi
-    original_position = np.matrix([
-        [8],
-        [0],
-        [2]
-    ])
-
+    if not start_position is None:
+        original_position = start_position
+    else:
+        original_position = np.matrix([
+            [8],
+            [0],
+            [2]
+        ])
+    print('original', original_position)
     """ This will store the bonding boxes """
     labels = []
 
@@ -171,4 +182,4 @@ if __name__ == '__main__':
     mesh_names = ['Cube', 'Sphere']
     mesh_objects = [bpy.data.objects[name] for name in mesh_names]
     #batch_render(scene, camera_object, mesh_objects)
-    render_cams(cams, scene, camera_object, mesh_objects)
+    render_cams_steeps(cams, scene, camera_object, mesh_objects, camera_steeps=5)
